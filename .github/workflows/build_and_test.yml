@@ -9,7 +9,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-18.04]
+        os: [ubuntu-18.04, windows-latest, macos-latest]
 
     steps:
       - uses: actions/checkout@v2
@@ -55,15 +55,10 @@ jobs:
           path: dist/*.tar.gz
 
   build_aarch64_wheel:
-    name: "Build aarch64"
+    name: "Build wheels aarch64"
     strategy:
-      #matrix:
-        #pyver: [cp36-cp36m, cp37-cp37m, cp38-cp38, cp39-cp39]
       fail-fast: false
-    runs-on: ubuntu-latest
-    #env:
-      #py: /opt/python/${{ matrix.pyver }}/bin/python
-      #img: quay.io/pypa/manylinux2014_aarch64
+    runs-on: ubuntu-18.04
     steps:
     - name: Checkout
       uses: actions/checkout@v2
@@ -86,7 +81,7 @@ jobs:
         path: ./wheelhouse/*.whl
         
   upload_pypi:
-    needs: [build_wheels, build_sdist]
+    needs: [build_wheels, build_sdist, build_aarch64_wheel]
     runs-on: ubuntu-latest
     # upload to PyPI on every tag starting with 'v'
     if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/v')
