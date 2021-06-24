@@ -5,11 +5,15 @@ on: [push, pull_request]
 
 jobs:
   build_wheels:
-    name: Build wheels on ${{ matrix.os }}
+    name: Build wheels on ${{matrix.arch}} for ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [ubuntu-18.04, windows-latest, macos-latest]
+        arch: [auto]
+        include:
+          - os: ubuntu-18.04
+            arch: aarch64        
 
     steps:
       - uses: actions/checkout@v2
@@ -18,7 +22,11 @@ jobs:
         name: Install Python
         with:
           python-version: '3.9'
-
+          
+      - uses: docker/setup-qemu-action@v1
+        if: ${{ matrix.arch == 'aarch64' }}
+        name: Set up QEMU
+        
       - name: Install Visual C++ for Python 2.7
         if: runner.os == 'Windows'
         run: |
@@ -28,6 +36,7 @@ jobs:
         uses: joerick/cibuildwheel@v1.9.0
         env:
           CIBW_SKIP: pp*
+          CIBW_ARCHS_LINUX: ${{matrix.arch}}
           CIBW_ARCHS_MACOS: auto universal2
           CIBW_TEST_REQUIRES: nose
           CIBW_TEST_COMMAND: "nosetests {project}/tests"
@@ -54,34 +63,8 @@ jobs:
         with:
           path: dist/*.tar.gz
 
-  build_aarch64_wheel:
-    name: "Build wheels aarch64"
-    strategy:
-      fail-fast: false
-    runs-on: ubuntu-18.04
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v2
-    - uses: actions/setup-python@v2
-      name: Install Python
-      with:
-        python-version: '3.9'    
-    - name: Set up QEMU
-      id: qemu
-      uses: docker/setup-qemu-action@v1
-    - name: Build wheels
-      uses: joerick/cibuildwheel@v1.9.0
-      env:
-        CIBW_SKIP: pp*
-        CIBW_ARCHS_LINUX: aarch64 
-        CIBW_TEST_REQUIRES: nose
-        CIBW_TEST_COMMAND: "nosetests {project}/tests"
-    - uses: actions/upload-artifact@v2
-      with:
-        path: ./wheelhouse/*.whl
-        
   upload_pypi:
-    needs: [build_wheels, build_sdist, build_aarch64_wheel]
+    needs: [build_wheels, build_sdist]
     runs-on: ubuntu-latest
     # upload to PyPI on every tag starting with 'v'
     if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/v')
