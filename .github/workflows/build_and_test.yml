@@ -55,31 +55,32 @@ jobs:
           path: dist/*.tar.gz
 
   build_aarch64_wheel:
-    name: "Build ${{ matrix.pyver }} aarch64"
+    name: "Build aarch64"
     strategy:
-      matrix:
-        pyver: [cp36-cp36m, cp37-cp37m, cp38-cp38, cp39-cp39]
+      #matrix:
+        #pyver: [cp36-cp36m, cp37-cp37m, cp38-cp38, cp39-cp39]
       fail-fast: false
     runs-on: ubuntu-latest
-    env:
-      py: /opt/python/${{ matrix.pyver }}/bin/python
-      img: quay.io/pypa/manylinux2014_aarch64
+    #env:
+      #py: /opt/python/${{ matrix.pyver }}/bin/python
+      #img: quay.io/pypa/manylinux2014_aarch64
     steps:
     - name: Checkout
       uses: actions/checkout@v2
+    - uses: actions/setup-python@v2
+      name: Install Python
+      with:
+        python-version: '3.9'    
     - name: Set up QEMU
       id: qemu
       uses: docker/setup-qemu-action@v1
-    - name: Build wheel
-      run: |
-            docker run --rm -v ${{ github.workspace }}:/ws:rw --workdir=/ws \
-            ${{ env.img }} \
-            bash -exc '${{ env.py }} -m pip install virtualenv && ${{ env.py }} -m venv .env && \
-            source .env/bin/activate && \
-            python setup.py bdist && \
-            #pip install nose && \
-            #nosetests && \
-            deactivate'
+    - name: Build wheels
+      uses: joerick/cibuildwheel@v1.9.0
+      env:
+        CIBW_SKIP: pp*
+        CIBW_ARCHS_MACOS: auto universal2
+        CIBW_TEST_REQUIRES: nose
+        CIBW_TEST_COMMAND: "nosetests {project}/tests"
     - uses: actions/upload-artifact@v2
       with:
         path: ./wheelhouse/*.whl
