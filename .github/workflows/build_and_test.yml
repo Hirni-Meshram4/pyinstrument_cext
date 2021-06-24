@@ -22,7 +22,7 @@ jobs:
       - name: Install Visual C++ for Python 2.7
         if: runner.os == 'Windows'
         run: |
-          choco install vcpython27 -f -y
+          choco install vcpython27 -f -y --pre
 
       - name: Build wheels
         uses: joerick/cibuildwheel@v1.9.0
