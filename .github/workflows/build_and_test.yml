@@ -77,7 +77,8 @@ jobs:
             bash -exc '${{ env.py }} -m pip install virtualenv && ${{ env.py }} -m venv .env && \
             source .env/bin/activate && \
             python setup.py bdist && \
-            nosetests {project}/tests && \
+            pip install nose && \
+            nosetests && \
             deactivate'
     - uses: actions/upload-artifact@v2
       with:
