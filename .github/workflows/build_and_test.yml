@@ -5,7 +5,7 @@ on: [push, pull_request]
 
 jobs:
   build_wheels:
-    name: Build wheels on ${{ matrix.os }}
+    name: Build wheels on ${{matrix.arch}} for ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -29,7 +29,8 @@ jobs:
 
       - name: Set up QEMU
         if: ${{ matrix.archs == 'aarch64' }}
-        
+        uses: docker/setup-qemu-action@v1
+
       - name: Install Visual C++ for Python 2.7
         if: runner.os == 'Windows'
         run: |
